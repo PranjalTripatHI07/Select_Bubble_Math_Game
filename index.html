@@ -796,9 +796,10 @@
                 let a, b, operator, value, display, normalized;
                 
                 // Decide expression type based on difficulty
-                const useDecimal = this.difficulty.decimalPrecision > 0 && Math.random() < 0.3;
-                const useFraction = this.difficulty.useFractions && Math.random() < 0.25;
-                const useMixed = this.difficulty.useFractions && this.difficulty.decimalPrecision > 0 && Math.random() < 0.15;
+                // Probabilities: Decimals 45%, Fractions 37%, Mixed 25%
+                const useDecimal = this.difficulty.decimalPrecision > 0 && Math.random() < 0.45;
+                const useFraction = this.difficulty.useFractions && Math.random() < 0.37;
+                const useMixed = this.difficulty.useFractions && this.difficulty.decimalPrecision > 0 && Math.random() < 0.25;
                 
                 // Mixed expression: decimal with fraction
                 if (useMixed) {
@@ -1178,12 +1179,36 @@
              * This provides gradual progression even when answers take longer
              */
             increaseSlightDifficulty() {
-                // Only increase maxNumber slightly (by 2 instead of 5)
-                // This is a gentler increase than increaseSingleDimension
+                // Gradual progression for correct answers
+                
+                // Enable decimals after question 3
+                if (this.difficulty.decimalPrecision === 0 && this.currentQuestion >= 3) {
+                    this.difficulty.decimalPrecision = 1;
+                    return;
+                }
+                
+                // Enable fractions after question 5
+                if (!this.difficulty.useFractions && this.currentQuestion >= 5) {
+                    this.difficulty.useFractions = true;
+                    return;
+                }
+                
+                // Increase decimal precision after question 10
+                if (this.difficulty.decimalPrecision === 1 && this.currentQuestion >= 10) {
+                    this.difficulty.decimalPrecision = 2;
+                    return;
+                }
+                
+                // Enable mixed operators after question 12
+                if (!this.difficulty.mixOperators && this.currentQuestion >= 12) {
+                    this.difficulty.mixOperators = true;
+                    return;
+                }
+                
+                // Increase maxNumber slightly
                 if (this.difficulty.maxNumber < 50) {
                     this.difficulty.maxNumber = Math.min(50, this.difficulty.maxNumber + 2);
                 }
-                // Other dimensions are only increased via fast completions (increaseSingleDimension)
             }
 
             /**
@@ -1345,25 +1370,26 @@
             increaseSingleDimension() {
                 // Priority order for dimension increases
                 // bubbleCount is NOT included - always fixed at 3 per spec
+                // Changed priority: enable decimals/fractions earlier for variety
                 const dimensions = [
+                    {
+                        name: 'decimalPrecision',
+                        canIncrease: () => this.difficulty.decimalPrecision < 2 && this.currentQuestion >= 3,
+                        increase: () => { this.difficulty.decimalPrecision++; }
+                    },
+                    {
+                        name: 'useFractions',
+                        canIncrease: () => !this.difficulty.useFractions && this.currentQuestion >= 4,
+                        increase: () => { this.difficulty.useFractions = true; }
+                    },
                     {
                         name: 'maxNumber',
                         canIncrease: () => this.difficulty.maxNumber < 50,
                         increase: () => { this.difficulty.maxNumber = Math.min(50, this.difficulty.maxNumber + 5); }
                     },
                     {
-                        name: 'decimalPrecision',
-                        canIncrease: () => this.difficulty.decimalPrecision < 2 && this.currentQuestion >= 5,
-                        increase: () => { this.difficulty.decimalPrecision++; }
-                    },
-                    {
-                        name: 'useFractions',
-                        canIncrease: () => !this.difficulty.useFractions && this.currentQuestion >= 8,
-                        increase: () => { this.difficulty.useFractions = true; }
-                    },
-                    {
                         name: 'mixOperators',
-                        canIncrease: () => !this.difficulty.mixOperators && this.currentQuestion >= 12,
+                        canIncrease: () => !this.difficulty.mixOperators && this.currentQuestion >= 8,
                         increase: () => { this.difficulty.mixOperators = true; }
                     }
                 ];

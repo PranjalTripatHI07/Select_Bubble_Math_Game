@@ -1160,13 +1160,30 @@
                 
                 // Step 5: Determine difficulty adjustment
                 if (previousRoundCorrect && fastCompletion) {
-                    // Fast + accurate = increase ONE dimension only
+                    // Fast + accurate = increase ONE dimension only (major increase)
                     this.increaseSingleDimension();
+                } else if (previousRoundCorrect) {
+                    // Correct ordering (but not fast) = slight difficulty increase
+                    // This ensures difficulty gradually increases for every correct answer
+                    this.increaseSlightDifficulty();
                 } else if (this.isStruggling()) {
                     // Struggling = decrease difficulty
                     this.decreaseDifficulty();
                 }
                 // Otherwise: maintain current difficulty
+            }
+
+            /**
+             * Increase difficulty slightly for correct answers (not fast completions)
+             * This provides gradual progression even when answers take longer
+             */
+            increaseSlightDifficulty() {
+                // Only increase maxNumber slightly (by 2 instead of 5)
+                // This is a gentler increase than increaseSingleDimension
+                if (this.difficulty.maxNumber < 50) {
+                    this.difficulty.maxNumber = Math.min(50, this.difficulty.maxNumber + 2);
+                }
+                // Other dimensions are only increased via fast completions (increaseSingleDimension)
             }
 
             /**

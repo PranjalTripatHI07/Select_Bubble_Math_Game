@@ -1,1 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Math Game - Cognitive Assessment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        /* Timer Styles */
+        .timer-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .timer {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(#00d4ff 0deg, #00d4ff 0deg, rgba(255,255,255,0.1) 0deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .timer-inner {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #1a1a2e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .timer.warning .timer-inner {
+            color: #ff6b6b;
+        }
+
+        /* Instruction Banner */
+        .instruction-banner {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(90deg, rgba(0,212,255,0.2), rgba(0,212,255,0.1));
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,212,255,0.3);
+        }
+
+        .instruction-text {
+            font-size: 1.3rem;
+            color: #fff;
+        }
+
+        .instruction-highlight {
+            color: #00d4ff;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Game Area */
+        .game-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        .bubble-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        /* Bubble Styles */
+        .bubble {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            border: 3px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3), inset 0 0 30px rgba(255,255,255,0.1);
+        }
+
+        .bubble:nth-child(1) { animation-delay: 0s; }
+        .bubble:nth-child(2) { animation-delay: 0.5s; }
+        .bubble:nth-child(3) { animation-delay: 1s; }
+        .bubble:nth-child(4) { animation-delay: 1.5s; }
+        .bubble:nth-child(5) { animation-delay: 2s; }
+        .bubble:nth-child(6) { animation-delay: 2.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-15px) rotate(2deg); }
+            75% { transform: translateY(15px) rotate(-2deg); }
+        }
+
+        .bubble:hover {
+            transform: scale(1.1);
+            border-color: #00d4ff;
+            box-shadow: 0 15px 50px rgba(0,212,255,0.4), inset 0 0 30px rgba(255,255,255,0.2);
+        }
+
+        .bubble.selected {
+            pointer-events: none;
+        }
+
+        .bubble.correct {
+            background: linear-gradient(145deg, rgba(46,213,115,0.4), rgba(46,213,115,0.2));
+            border-color: #2ed573;
+            box-shadow: 0 10px 40px rgba(46,213,115,0.5);
+            animation: correctPulse 0.5s ease;
+        }
+
+        .bubble.incorrect {
+            background: linear-gradient(145deg, rgba(255,107,107,0.4), rgba(255,107,107,0.2));
+            border-color: #ff6b6b;
+            box-shadow: 0 10px 40px rgba(255,107,107,0.5);
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .bubble-content {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .expression {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .bubble-order {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #00d4ff;
+            color: #1a1a2e;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .bubble.selected .bubble-order {
+            display: flex;
+        }
+
+        /* Start Screen */
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .screen.hidden {
+            display: none;
+        }
+
+        .screen-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+        }
+
+        .screen-title {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-shadow: 0 0 30px rgba(0,212,255,0.5);
+        }
+
+        .screen-subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .rules-list {
+            text-align: left;
+            background: rgba(255,255,255,0.05);
+            padding: 25px 35px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .rules-list li {
+            margin-bottom: 12px;
+            color: #ddd;
+            line-height: 1.5;
+        }
+
+        .rules-list li::marker {
+            color: #00d4ff;
+        }
+
+        .btn {
+            padding: 15px 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,212,255,0.4);
+        }
+
+        /* Results Screen */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .result-card {
+            background: rgba(255,255,255,0.08);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .result-value.good {
+            color: #2ed573;
+        }
+
+        .result-value.bad {
+            color: #ff6b6b;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-area {
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+
+            .bubble {
+                width: 140px;
+                height: 140px;
+            }
+
+            .expression {
+                font-size: 1.1rem;
+            }
+
+            .stats {
+                gap: 15px;
+            }
+
+            .stat-value {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen">
+        <div class="screen-content">
+            <h1 class="screen-title">🫧 Bubble Math</h1>
+            <p class="screen-subtitle">Cognitive Assessment Game</p>
+            <ul class="rules-list">
+                <li><strong>25 Questions</strong> - Complete all rounds to finish</li>
+                <li><strong>15 Seconds</strong> - Time limit per question</li>
+                <li><strong>Calculate & Order</strong> - Solve each expression mentally</li>
+                <li><strong>Select in Order</strong> - Click bubbles from lowest to highest value</li>
+                <li><strong>Adaptive Difficulty</strong> - Challenge increases with your performance</li>
+            </ul>
+            <button class="btn btn-primary" onclick="game.start()">Start Game</button>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="screen hidden">
+        <div class="screen-content">
+            <h1 class="screen-title">🏆 Assessment Complete</h1>
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-label">Final Score</div>
+                    <div id="finalScore" class="result-value">0</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Accuracy</div>
+                    <div id="finalAccuracy" class="result-value">0%</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Correct Selections</div>
+                    <div id="finalCorrect" class="result-value good">0</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Incorrect Selections</div>
+                    <div id="finalIncorrect" class="result-value bad">0</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Avg Response Time</div>
+                    <div id="finalAvgTime" class="result-value">0s</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Questions Completed</div>
+                    <div id="finalQuestions" class="result-value">0/25</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Perfect Questions</div>
+                    <div id="finalPerfect" class="result-value good">0/25</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Wrong Questions</div>
+                    <div id="finalWrongQuestions" class="result-value bad">0/25</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="game.restart()">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="container hidden">
+        <div class="header">
+            <div class="logo">🫧 Bubble Math</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Question</div>
+                    <div id="questionNum" class="stat-value">1/25</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Correct</div>
+                    <div id="correctCount" class="stat-value">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Incorrect</div>
+                    <div id="incorrectCount" class="stat-value">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Accuracy</div>
+                    <div id="accuracy" class="stat-value">100%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Perfect</div>
+                    <div id="perfectCount" class="stat-value">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Wrong Q's</div>
+                    <div id="wrongQuestions" class="stat-value">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span>Progress</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <div class="timer-container">
+            <div id="timer" class="timer">
+                <div id="timerValue" class="timer-inner">15</div>
+            </div>
+        </div>
+
+        <div class="instruction-banner">
+            <p class="instruction-text">
+                Select bubbles from <span class="instruction-highlight">LOWEST</span> to <span class="instruction-highlight">HIGHEST</span> value
+            </p>
+        </div>
+
+        <div id="gameArea" class="game-area">
+            <!-- Bubbles will be generated here -->
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Bubble Math Game - Cognitive Assessment
+         * Replicates Accenture Bubble Math Game (2026 Pattern)
+         */
+
+        class BubbleMathGame {
+            constructor() {
+                // Game configuration
+                this.totalQuestions = 25;
+                this.timeLimit = 15;
+                
+                // State
+                this.currentQuestion = 0;
+                this.correctSelections = 0;
+                this.incorrectSelections = 0;
+                this.totalSelections = 0;
+                this.perfectQuestions = 0;
+                this.wrongQuestions = 0;
+                this.currentQuestionCorrect = true;
+                this.responseTimes = [];
+                this.questionStartTime = 0;
+                this.timer = null;
+                this.timeRemaining = this.timeLimit;
+                
+                // Expression tracking for uniqueness
+                this.usedExpressions = new Set();
+                
+                // Current question state
+                this.currentBubbles = [];
+                this.selectedOrder = [];
+                this.correctOrder = [];
+                
+                // Adaptive difficulty
+                this.difficulty = {
+                    bubbleCount: 3,
+                    maxNumber: 20,
+                    decimalPrecision: 0,
+                    useFractions: false,
+                    mixOperators: false,
+                    recentPerformance: []
+                };
+                
+                // DOM elements
+                this.elements = {
+                    startScreen: document.getElementById('startScreen'),
+                    gameScreen: document.getElementById('gameScreen'),
+                    resultsScreen: document.getElementById('resultsScreen'),
+                    gameArea: document.getElementById('gameArea'),
+                    timer: document.getElementById('timer'),
+                    timerValue: document.getElementById('timerValue'),
+                    questionNum: document.getElementById('questionNum'),
+                    correctCount: document.getElementById('correctCount'),
+                    incorrectCount: document.getElementById('incorrectCount'),
+                    accuracy: document.getElementById('accuracy'),
+                    perfectCount: document.getElementById('perfectCount'),
+                    wrongQuestions: document.getElementById('wrongQuestions'),
+                    progressFill: document.getElementById('progressFill'),
+                    progressPercent: document.getElementById('progressPercent')
+                };
+            }
+
+            /**
+             * Start the game
+             */
+            start() {
+                this.reset();
+                this.elements.startScreen.classList.add('hidden');
+                this.elements.resultsScreen.classList.add('hidden');
+                this.elements.gameScreen.classList.remove('hidden');
+                this.nextQuestion();
+            }
+
+            /**
+             * Reset game state
+             */
+            reset() {
+                this.currentQuestion = 0;
+                this.correctSelections = 0;
+                this.incorrectSelections = 0;
+                this.totalSelections = 0;
+                this.perfectQuestions = 0;
+                this.wrongQuestions = 0;
+                this.currentQuestionCorrect = true;
+                this.responseTimes = [];
+                this.usedExpressions.clear();
+                this.difficulty = {
+                    bubbleCount: 3,
+                    maxNumber: 20,
+                    decimalPrecision: 0,
+                    useFractions: false,
+                    mixOperators: false,
+                    recentPerformance: []
+                };
+                this.updateStats();
+            }
+
+            /**
+             * Restart the game
+             */
+            restart() {
+                this.elements.resultsScreen.classList.add('hidden');
+                this.start();
+            }
+
+            /**
+             * Generate next question
+             */
+            nextQuestion() {
+                if (this.currentQuestion >= this.totalQuestions) {
+                    this.endGame();
+                    return;
+                }
+
+                this.currentQuestion++;
+                this.selectedOrder = [];
+                this.currentQuestionCorrect = true;
+                this.questionStartTime = Date.now();
+                
+                // Adapt difficulty based on performance
+                this.adaptDifficulty();
+                
+                // Generate bubbles with unique expressions
+                this.currentBubbles = this.generateBubbles();
+                
+                // Calculate correct order (lowest to highest)
+                this.correctOrder = [...this.currentBubbles]
+                    .sort((a, b) => a.value - b.value)
+                    .map(b => b.id);
+                
+                // Render bubbles
+                this.renderBubbles();
+                
+                // Update UI
+                this.updateStats();
+                
+                // Start timer
+                this.startTimer();
+            }
+
+            /**
+             * Generate bubbles with unique expressions
+             */
+            generateBubbles() {
+                const bubbles = [];
+                const bubbleCount = this.difficulty.bubbleCount;
+                
+                for (let i = 0; i < bubbleCount; i++) {
+                    let expression, value, displayExpression;
+                    let attempts = 0;
+                    
+                    do {
+                        const generated = this.generateExpression();
+                        expression = generated.normalized;
+                        displayExpression = generated.display;
+                        value = generated.value;
+                        attempts++;
+                        
+                        // Prevent infinite loops
+                        if (attempts > 100) {
+                            // Reset some used expressions if we're running out
+                            if (this.usedExpressions.size > 500) {
+                                const arr = Array.from(this.usedExpressions);
+                                this.usedExpressions = new Set(arr.slice(-200));
+                            }
+                        }
+                    } while (
+                        this.usedExpressions.has(expression) || 
+                        bubbles.some(b => Math.abs(b.value - value) < 0.001) // Ensure distinct values
+                    );
+                    
+                    this.usedExpressions.add(expression);
+                    
+                    bubbles.push({
+                        id: i,
+                        expression: displayExpression,
+                        value: value,
+                        selected: false,
+                        correct: null
+                    });
+                }
+                
+                // Shuffle bubbles for display
+                return this.shuffleArray(bubbles);
+            }
+
+            /**
+             * Generate a unique arithmetic expression
+             */
+            generateExpression() {
+                const operators = ['+', '−', '×', '÷'];
+                let a, b, operator, value, display, normalized;
+                
+                // Decide expression type based on difficulty
+                const useDecimal = this.difficulty.decimalPrecision > 0 && Math.random() < 0.3;
+                const useFraction = this.difficulty.useFractions && Math.random() < 0.25;
+                const useMixed = this.difficulty.useFractions && this.difficulty.decimalPrecision > 0 && Math.random() < 0.15;
+                
+                // Mixed expression: decimal with fraction
+                if (useMixed) {
+                    return this.generateMixedExpression();
+                }
+                
+                if (useFraction) {
+                    return this.generateFractionExpression();
+                }
+                
+                operator = operators[Math.floor(Math.random() * operators.length)];
+                
+                if (this.difficulty.mixOperators && Math.random() < 0.3) {
+                    // Sometimes use more challenging operator combinations
+                    operator = ['×', '÷'][Math.floor(Math.random() * 2)];
+                }
+                
+                const maxNum = this.difficulty.maxNumber;
+                const precision = this.difficulty.decimalPrecision;
+                
+                if (useDecimal) {
+                    a = this.randomDecimal(1, maxNum, precision);
+                    b = this.randomDecimal(1, maxNum, precision);
+                } else {
+                    a = this.randomInt(1, maxNum);
+                    b = this.randomInt(1, maxNum);
+                }
+                
+                // Ensure valid operations
+                switch (operator) {
+                    case '+':
+                        value = a + b;
+                        break;
+                    case '−':
+                        // Ensure positive result for cleaner gameplay
+                        if (a < b) [a, b] = [b, a];
+                        value = a - b;
+                        break;
+                    case '×':
+                        // Keep multiplication manageable
+                        if (!useDecimal) {
+                            a = this.randomInt(1, Math.min(12, maxNum));
+                            b = this.randomInt(1, Math.min(12, maxNum));
+                        }
+                        value = a * b;
+                        break;
+                    case '÷':
+                        // Ensure clean division
+                        if (useDecimal) {
+                            b = this.randomDecimal(1, 10, 1);
+                            a = this.roundTo(b * this.randomInt(2, 10), precision);
+                        } else {
+                            b = this.randomInt(1, 12);
+                            a = b * this.randomInt(1, 12);
+                        }
+                        value = a / b;
+                        break;
+                }
+                
+                value = this.roundTo(value, 4);
+                
+                // Format display
+                const aDisplay = useDecimal ? a.toFixed(precision) : a;
+                const bDisplay = useDecimal ? b.toFixed(precision) : b;
+                display = `${aDisplay} ${operator} ${bDisplay}`;
+                
+                // Normalize for uniqueness checking (sort operands for commutative ops)
+                if (operator === '+' || operator === '×') {
+                    const sorted = [a, b].sort((x, y) => x - y);
+                    normalized = `${sorted[0]}${operator}${sorted[1]}`;
+                } else {
+                    normalized = `${a}${operator}${b}`;
+                }
+                
+                return { display, normalized, value };
+            }
+
+            /**
+             * Generate fraction-based expression
+             */
+            generateFractionExpression() {
+                const operators = ['+', '−', '×', '÷'];
+                const operator = operators[Math.floor(Math.random() * operators.length)];
+                
+                // Generate two fractions
+                const frac1 = this.generateFraction();
+                const frac2 = this.generateFraction();
+                
+                let value;
+                switch (operator) {
+                    case '+':
+                        value = frac1.value + frac2.value;
+                        break;
+                    case '−':
+                        value = frac1.value - frac2.value;
+                        break;
+                    case '×':
+                        value = frac1.value * frac2.value;
+                        break;
+                    case '÷':
+                        value = frac1.value / frac2.value;
+                        break;
+                }
+                
+                value = this.roundTo(value, 4);
+                
+                const display = `${frac1.display} ${operator} ${frac2.display}`;
+                const normalized = `${frac1.normalized}${operator}${frac2.normalized}`;
+                
+                return { display, normalized, value };
+            }
+
+            /**
+             * Generate a simple fraction
+             */
+            generateFraction() {
+                const denominators = [2, 3, 4, 5, 6, 8, 10];
+                const denominator = denominators[Math.floor(Math.random() * denominators.length)];
+                const numerator = this.randomInt(1, denominator * 2);
+                
+                const value = numerator / denominator;
+                const display = `${numerator}/${denominator}`;
+                const normalized = `(${numerator}/${denominator})`;
+                
+                return { display, normalized, value };
+            }
+
+            /**
+             * Generate mixed expression (decimal × fraction)
+             */
+            generateMixedExpression() {
+                const operators = ['×', '÷', '+', '−'];
+                const operator = operators[Math.floor(Math.random() * operators.length)];
+                
+                // Generate a decimal and a fraction
+                const precision = this.difficulty.decimalPrecision;
+                const decimal = this.randomDecimal(1, 10, precision);
+                const frac = this.generateFraction();
+                
+                let value;
+                switch (operator) {
+                    case '+': value = decimal + frac.value; break;
+                    case '−': value = decimal - frac.value; break;
+                    case '×': value = decimal * frac.value; break;
+                    case '÷': value = decimal / frac.value; break;
+                }
+                
+                value = this.roundTo(value, 4);
+                
+                const display = `${decimal.toFixed(precision)} ${operator} ${frac.display}`;
+                const normalized = `${decimal}${operator}${frac.normalized}`;
+                
+                return { display, normalized, value };
+            }
+
+            /**
+             * Render bubbles to the game area in triangle formation
+             */
+            renderBubbles() {
+                this.elements.gameArea.innerHTML = '';
+                
+                const bubbleCount = this.currentBubbles.length;
+                
+                // Calculate triangle rows: 1 on top, 2 on bottom for 3 bubbles
+                // Pattern: 1, 2, 3, 4... bubbles per row
+                let rows = [];
+                let remaining = bubbleCount;
+                let rowSize = 1;
+                
+                while (remaining > 0) {
+                    const count = Math.min(rowSize, remaining);
+                    rows.push(count);
+                    remaining -= count;
+                    rowSize++;
+                }
+                
+                let bubbleIndex = 0;
+                
+                rows.forEach((rowCount) => {
+                    const rowEl = document.createElement('div');
+                    rowEl.className = 'bubble-row';
+                    
+                    for (let i = 0; i < rowCount && bubbleIndex < bubbleCount; i++) {
+                        const bubble = this.currentBubbles[bubbleIndex];
+                        const bubbleEl = document.createElement('div');
+                        bubbleEl.className = 'bubble';
+                        bubbleEl.dataset.id = bubble.id;
+                        bubbleEl.innerHTML = `
+                            <div class="bubble-content">
+                                <div class="expression">${bubble.expression}</div>
+                            </div>
+                            <div class="bubble-order"></div>
+                        `;
+                        
+                        bubbleEl.addEventListener('click', () => this.selectBubble(bubble.id));
+                        rowEl.appendChild(bubbleEl);
+                        bubbleIndex++;
+                    }
+                    
+                    this.elements.gameArea.appendChild(rowEl);
+                });
+            }
+
+            /**
+             * Handle bubble selection
+             */
+            selectBubble(bubbleId) {
+                const bubble = this.currentBubbles.find(b => b.id === bubbleId);
+                if (!bubble || bubble.selected) return;
+                
+                const expectedIndex = this.selectedOrder.length;
+                const isCorrect = this.correctOrder[expectedIndex] === bubbleId;
+                
+                bubble.selected = true;
+                bubble.correct = isCorrect;
+                this.selectedOrder.push(bubbleId);
+                this.totalSelections++;
+                
+                // Update bubble visual
+                const bubbleEl = this.elements.gameArea.querySelector(`[data-id="${bubbleId}"]`);
+                bubbleEl.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
+                bubbleEl.querySelector('.bubble-order').textContent = expectedIndex + 1;
+                
+                // Track performance
+                if (isCorrect) {
+                    this.correctSelections++;
+                    this.difficulty.recentPerformance.push(1);
+                } else {
+                    this.incorrectSelections++;
+                    this.currentQuestionCorrect = false;
+                    this.difficulty.recentPerformance.push(0);
+                }
+                
+                // Keep only recent performance
+                if (this.difficulty.recentPerformance.length > 15) {
+                    this.difficulty.recentPerformance.shift();
+                }
+                
+                this.updateStats();
+                
+                // Check if question is complete
+                if (this.selectedOrder.length === this.currentBubbles.length) {
+                    // Stop timer immediately to prevent timeout overlap
+                    this.stopTimer();
+                    
+                    // Record response time
+                    this.responseTimes.push((Date.now() - this.questionStartTime) / 1000);
+                    
+                    // Track perfect and wrong questions
+                    if (this.currentQuestionCorrect) {
+                        this.perfectQuestions++;
+                    } else {
+                        this.wrongQuestions++;
+                    }
+                    this.updateStats();
+                    
+                    // Immediate transition to next question
+                    this.nextQuestion();
+                }
+            }
+
+            /**
+             * Start the countdown timer
+             */
+            startTimer() {
+                this.stopTimer(); // Ensure no duplicate timers
+                this.timeRemaining = this.timeLimit;
+                this.updateTimerDisplay();
+                
+                this.timer = setInterval(() => {
+                    this.timeRemaining--;
+                    this.updateTimerDisplay();
+                    
+                    if (this.timeRemaining <= 0) {
+                        this.stopTimer();
+                        this.responseTimes.push(this.timeLimit);
+                        
+                        // Count remaining unselected bubbles as incorrect
+                        const remaining = this.currentBubbles.length - this.selectedOrder.length;
+                        if (remaining > 0) {
+                            this.incorrectSelections += remaining;
+                            this.totalSelections += remaining;
+                            this.currentQuestionCorrect = false;
+                        }
+                        
+                        // Track wrong question (only if not already completed)
+                        if (!this.currentQuestionCorrect) {
+                            this.wrongQuestions++;
+                        } else {
+                            this.perfectQuestions++;
+                        }
+                        
+                        this.updateStats();
+                        // Immediate transition - no delay
+                        this.nextQuestion();
+                    }
+                }, 1000);
+            }
+
+            /**
+             * Stop the timer
+             */
+            stopTimer() {
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+            }
+
+            /**
+             * Update timer display
+             */
+            updateTimerDisplay() {
+                this.elements.timerValue.textContent = this.timeRemaining;
+                
+                // Update circular progress
+                const progress = (this.timeRemaining / this.timeLimit) * 360;
+                this.elements.timer.style.background = 
+                    `conic-gradient(#00d4ff ${progress}deg, rgba(255,255,255,0.1) ${progress}deg)`;
+                
+                // Warning state
+                if (this.timeRemaining <= 5) {
+                    this.elements.timer.classList.add('warning');
+                } else {
+                    this.elements.timer.classList.remove('warning');
+                }
+            }
+
+            /**
+             * Adapt difficulty based on performance
+             * Adaptivity Signals: Selection accuracy, Completion speed, Number of incorrect selections
+             */
+            adaptDifficulty() {
+                const recent = this.difficulty.recentPerformance;
+                
+                // Need at least 3 data points to start adapting
+                if (recent.length < 3) return;
+                
+                // Calculate recent accuracy (last 5 selections or all if less)
+                const recentSlice = recent.slice(-5);
+                const recentAccuracy = recentSlice.reduce((a, b) => a + b, 0) / recentSlice.length;
+                
+                // Calculate overall accuracy
+                const overallAccuracy = this.totalSelections > 0 
+                    ? this.correctSelections / this.totalSelections 
+                    : 1;
+                
+                // Calculate average response time (speed indicator)
+                const avgTime = this.responseTimes.length > 0
+                    ? this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length
+                    : this.timeLimit;
+                
+                // Fast completion = under 8 seconds average
+                const isFast = avgTime < 8;
+                
+                // Determine if player is performing well
+                const performingWell = (recentAccuracy >= 0.7 && overallAccuracy >= 0.65) || 
+                                       (recentAccuracy >= 0.8 && isFast);
+                
+                // Determine if player is struggling
+                const struggling = recentAccuracy < 0.5 || 
+                                   (this.incorrectSelections > this.correctSelections && this.totalSelections > 6);
+                
+                // INCREASE DIFFICULTY if performing well
+                if (performingWell) {
+                    // Increase number range (affects calculation complexity)
+                    if (this.difficulty.maxNumber < 50) {
+                        this.difficulty.maxNumber = Math.min(50, this.difficulty.maxNumber + 5);
+                    }
+                    
+                    // Progressive decimal precision: 0 -> 1 -> 2
+                    if (this.difficulty.decimalPrecision === 0 && this.currentQuestion >= 5) {
+                        this.difficulty.decimalPrecision = 1;
+                    } else if (this.difficulty.decimalPrecision === 1 && this.currentQuestion >= 12) {
+                        this.difficulty.decimalPrecision = 2;
+                    }
+                    
+                    // Enable fractions after question 8
+                    if (!this.difficulty.useFractions && this.currentQuestion >= 8) {
+                        this.difficulty.useFractions = true;
+                    }
+                    
+                    // Enable mixed operators after question 12
+                    if (!this.difficulty.mixOperators && this.currentQuestion >= 12) {
+                        this.difficulty.mixOperators = true;
+                    }
+                }
+                
+                // DECREASE DIFFICULTY if struggling
+                if (struggling) {
+                    // Reduce number range
+                    if (this.difficulty.maxNumber > 15) {
+                        this.difficulty.maxNumber = Math.max(15, this.difficulty.maxNumber - 5);
+                    }
+                    
+                    // Simplify: remove decimals, fractions, and mixed operators
+                    this.difficulty.decimalPrecision = 0;
+                    this.difficulty.useFractions = false;
+                    this.difficulty.mixOperators = false;
+                }
+            }
+
+            /**
+             * Update stats display
+             */
+            updateStats() {
+                const accuracy = this.totalSelections > 0 
+                    ? Math.round((this.correctSelections / this.totalSelections) * 100) 
+                    : 100;
+                
+                this.elements.questionNum.textContent = `${this.currentQuestion}/${this.totalQuestions}`;
+                this.elements.correctCount.textContent = this.correctSelections;
+                this.elements.incorrectCount.textContent = this.incorrectSelections;
+                this.elements.accuracy.textContent = `${accuracy}%`;
+                this.elements.perfectCount.textContent = this.perfectQuestions;
+                this.elements.wrongQuestions.textContent = this.wrongQuestions;
+                
+                const progress = (this.currentQuestion / this.totalQuestions) * 100;
+                this.elements.progressFill.style.width = `${progress}%`;
+                this.elements.progressPercent.textContent = `${Math.round(progress)}%`;
+            }
+
+            /**
+             * End the game and show results
+             */
+            endGame() {
+                this.stopTimer();
+                
+                const accuracy = this.totalSelections > 0 
+                    ? Math.round((this.correctSelections / this.totalSelections) * 100) 
+                    : 0;
+                
+                const avgTime = this.responseTimes.length > 0
+                    ? (this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length).toFixed(1)
+                    : 0;
+                
+                // Calculate score (weighted by accuracy and speed)
+                const baseScore = this.correctSelections * 10;
+                const speedBonus = Math.max(0, (15 - parseFloat(avgTime)) * 2);
+                const accuracyBonus = accuracy * 0.5;
+                const finalScore = Math.round(baseScore + speedBonus + accuracyBonus);
+                
+                // Update results screen
+                document.getElementById('finalScore').textContent = finalScore;
+                document.getElementById('finalAccuracy').textContent = `${accuracy}%`;
+                document.getElementById('finalAccuracy').className = `result-value ${accuracy >= 70 ? 'good' : 'bad'}`;
+                document.getElementById('finalCorrect').textContent = this.correctSelections;
+                document.getElementById('finalIncorrect').textContent = this.incorrectSelections;
+                document.getElementById('finalAvgTime').textContent = `${avgTime}s`;
+                document.getElementById('finalQuestions').textContent = `${this.currentQuestion}/${this.totalQuestions}`;
+                document.getElementById('finalPerfect').textContent = `${this.perfectQuestions}/${this.totalQuestions}`;
+                document.getElementById('finalWrongQuestions').textContent = `${this.wrongQuestions}/${this.totalQuestions}`;
+                
+                // Show results
+                this.elements.gameScreen.classList.add('hidden');
+                this.elements.resultsScreen.classList.remove('hidden');
+            }
+
+            // Utility functions
+            randomInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            randomDecimal(min, max, precision) {
+                const value = Math.random() * (max - min) + min;
+                return this.roundTo(value, precision);
+            }
+
+            roundTo(value, decimals) {
+                const factor = Math.pow(10, decimals);
+                return Math.round(value * factor) / factor;
+            }
+
+            shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+        }
+
+        // Initialize game
+        const game = new BubbleMathGame();
+    </script>
+</body>
+</html>
+
 

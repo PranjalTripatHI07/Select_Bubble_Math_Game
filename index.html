@@ -487,6 +487,10 @@
                     <div id="accuracy" class="stat-value">100%</div>
                 </div>
                 <div class="stat-item">
+                    <div class="stat-label">Avg Time</div>
+                    <div id="avgTime" class="stat-value">0.0s</div>
+                </div>
+                <div class="stat-item">
                     <div class="stat-label">Perfect</div>
                     <div id="perfectCount" class="stat-value">0</div>
                 </div>
@@ -514,7 +518,7 @@
         </div>
 
         <div class="instruction-banner">
-            <p class="instruction-text">
+            <p id="instructionText" class="instruction-text">
                 Select bubbles from <span class="instruction-highlight">LOWEST</span> to <span class="instruction-highlight">HIGHEST</span> value
             </p>
         </div>
@@ -551,6 +555,7 @@
                 
                 // Expression tracking for uniqueness
                 this.usedExpressions = new Set();
+                this.usedResults = new Set(); // Track used result values across questions
                 
                 // Current question state
                 this.currentBubbles = [];
@@ -602,10 +607,12 @@
                     correctCount: document.getElementById('correctCount'),
                     incorrectCount: document.getElementById('incorrectCount'),
                     accuracy: document.getElementById('accuracy'),
+                    avgTime: document.getElementById('avgTime'),
                     perfectCount: document.getElementById('perfectCount'),
                     wrongQuestions: document.getElementById('wrongQuestions'),
                     progressFill: document.getElementById('progressFill'),
-                    progressPercent: document.getElementById('progressPercent')
+                    progressPercent: document.getElementById('progressPercent'),
+                    instructionText: document.getElementById('instructionText')
                 };
             }
 
@@ -633,6 +640,7 @@
                 this.currentQuestionCorrect = true;
                 this.responseTimes = [];
                 this.usedExpressions.clear();
+                this.usedResults = new Set(); // Track used result values across questions
                 this.difficulty = {
                     bubbleCount: 3,  // FIXED: Always 3 bubbles per question
                     maxNumber: 20,
@@ -686,7 +694,10 @@
                 }
 
                 // Store previous round result for anchor mechanism BEFORE resetting
-                const previousRoundCorrect = this.currentQuestionCorrect;
+                // Only use previous result if we've completed at least one question
+                const previousRoundCorrect = this.currentQuestion > 0 
+                    ? this.currentQuestionCorrect 
+                    : true; // First question has no previous round to evaluate
                 const previousResponseTime = this.responseTimes.length > 0 
                     ? this.responseTimes[this.responseTimes.length - 1] 
                     : this.timeLimit;
@@ -695,6 +706,9 @@
                 this.selectedOrder = [];
                 this.currentQuestionCorrect = true;
                 this.questionStartTime = Date.now();
+                
+                // Update dynamic instruction banner (per spec requirement)
+                this.updateInstructionBanner();
                 
                 // Adapt difficulty based on performance, passing previous round data
                 this.adaptDifficulty(previousRoundCorrect, previousResponseTime);
@@ -742,13 +756,24 @@
                                 const arr = Array.from(this.usedExpressions);
                                 this.usedExpressions = new Set(arr.slice(-200));
                             }
+                            // Also prune used results if running out
+                            if (this.usedResults && this.usedResults.size > 200) {
+                                const arr = Array.from(this.usedResults);
+                                this.usedResults = new Set(arr.slice(-100));
+                            }
                         }
                     } while (
                         this.usedExpressions.has(expression) || 
-                        bubbles.some(b => Math.abs(b.value - value) < 0.001) // Ensure distinct values
+                        bubbles.some(b => Math.abs(b.value - value) < 0.001) || // Ensure distinct values within question
+                        (this.usedResults && this.usedResults.has(this.roundTo(value, 2))) // Ensure no repeated results across questions
                     );
                     
                     this.usedExpressions.add(expression);
+                    
+                    // Track result value to prevent repetition across questions
+                    if (this.usedResults) {
+                        this.usedResults.add(this.roundTo(value, 2));
+                    }
                     
                     bubbles.push({
                         id: i,
@@ -1221,26 +1246,6 @@
             }
 
             /**
-             * Check if anchor should be triggered (backup method)
-             * Primary trigger now uses previousRoundCorrect passed to adaptDifficulty
-             * This serves as a fallback validation using recentPerformance data
-             */
-            shouldTriggerAnchor() {
-                // Don't trigger if already in anchor state
-                if (this.anchor.active) return false;
-                
-                // Check if last round had any errors (look at recent performance)
-                const recent = this.difficulty.recentPerformance;
-                if (recent.length < 3) return false; // Need at least one complete round (3 bubbles)
-                
-                // Get performance from last round (last 3 entries for 3 bubbles - fixed count)
-                const lastRoundEntries = recent.slice(-3);
-                const hadError = lastRoundEntries.includes(0);
-                
-                return hadError;
-            }
-
-            /**
              * Trigger anchor state - freeze difficulty
              */
             triggerAnchor() {
@@ -1386,6 +1391,17 @@
             }
 
             /**
+             * Update dynamic instruction banner for each question
+             * Per spec: Display "lowest to highest" instruction dynamically at start of each question
+             */
+            updateInstructionBanner() {
+                // Per Accenture spec: sorting direction is always "lowest to highest"
+                // The instruction is dynamically confirmed/displayed at the start of each question
+                this.elements.instructionText.innerHTML = 
+                    'Select bubbles from <span class="instruction-highlight">LOWEST</span> to <span class="instruction-highlight">HIGHEST</span> value';
+            }
+
+            /**
              * Update stats display
              */
             updateStats() {
@@ -1393,10 +1409,16 @@
                     ? Math.round((this.correctSelections / this.totalSelections) * 100) 
                     : 100;
                 
+                // Calculate average response time
+                const avgTime = this.responseTimes.length > 0
+                    ? (this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length).toFixed(1)
+                    : '0.0';
+                
                 this.elements.questionNum.textContent = `${this.currentQuestion}/${this.totalQuestions}`;
                 this.elements.correctCount.textContent = this.correctSelections;
                 this.elements.incorrectCount.textContent = this.incorrectSelections;
                 this.elements.accuracy.textContent = `${accuracy}%`;
+                this.elements.avgTime.textContent = `${avgTime}s`;
                 this.elements.perfectCount.textContent = this.perfectQuestions;
                 this.elements.wrongQuestions.textContent = this.wrongQuestions;
                 

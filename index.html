@@ -717,8 +717,9 @@
                 this.currentBubbles = this.generateBubbles();
                 
                 // Calculate correct order (lowest to highest)
+                // Round values to 4 decimal places to avoid floating-point precision issues
                 this.correctOrder = [...this.currentBubbles]
-                    .sort((a, b) => a.value - b.value)
+                    .sort((a, b) => this.roundTo(a.value, 4) - this.roundTo(b.value, 4))
                     .map(b => b.id);
                 
                 // Render bubbles
@@ -764,7 +765,7 @@
                         }
                     } while (
                         this.usedExpressions.has(expression) || 
-                        bubbles.some(b => Math.abs(b.value - value) < 0.001) || // Ensure distinct values within question
+                        bubbles.some(b => Math.abs(b.value - value) < 0.1) || // Ensure distinct values within question (0.1 min gap for clear sorting)
                         (this.usedResults && this.usedResults.has(this.roundTo(value, 2))) // Ensure no repeated results across questions
                     );
                     
